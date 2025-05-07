@@ -1063,4 +1063,4 @@ if __name__ == '__main__':
     print("\nIniciando servidor de carta astral optimizado...")
     preload_resources()
     print("Servidor iniciando en modo producción")
-    app.run(host='0.0.0.0', port=10002, debug=False)
+    app.run(host='0.0.0.0', port=10003, debug=False)
