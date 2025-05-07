@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triplicidades</title>
+    <link rel="icon" href="https://github.com/Pedro-5D/Triplicidades/blob/main/favicon.png" type="image/png">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Cargar Babel sin mostrar advertencia -->
+    <script>
+        // Suprime la advertencia de Babel
+        console.originalWarn = console.warn;
+        console.warn = function(message) {
+            if (message && message.indexOf && message.indexOf('You are using the in-browser Babel transformer') !== -1) {
+                return;
+            }
+            console.originalWarn.apply(console, arguments);
+        };
+    </script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            background: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+        .wheel-container { 
+            max-width: 800px; 
+            height: auto; 
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls { 
+            margin-bottom: 20px; 
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls input, .controls select { 
+            margin-right: 10px; 
+            margin-bottom: 10px;
+            padding: 8px; 
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .controls button { 
+            padding: 8px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background: #0056b3;
+        }
+        .planet-label { 
+            font-size: 20px;
+            font-family: Arial Unicode MS, sans-serif;
+            font-weight: bold;
+            transition: font-size 0.2s;
+        }
+        .planet-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .aspect-line {
+            cursor: pointer;
+            transition: stroke-width 0.2s;
+        }
+        .aspect-list-item {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 4px 0;
+            transition: all 0.2s;
+        }
+        .aspect-list-item:hover {
+            background-color: #f0f0f0;
+        }
+        .planet-list-item {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 4px 0;
+            transition: all 0.2s;
+        }
+        .planet-list-item:hover {
+            background-color: #f0f0f0;
+        }
+        .aspects-list {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .dignity-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        .dignity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .dignity-table th,
+        .dignity-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        .dignity-table th {
+            background-color: #f5f5f5;
+        }
+        .dignity-table tfoot td {
+            font-weight: bold;
+        }
+        .triplicity-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        .triplicity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-family: "Arial Unicode MS", sans-serif;
+        }
+        .triplicity-table th,
+        .triplicity-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        .triplicity-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .triplicity-table td:first-child {
+            font-weight: bold;
+        }
+        .triplicity-table td:nth-child(3) {
+            text-align: left;
+            font-size: 0.9em;
+        }
+        
+        /* Estilos responsivos */
+        @media (max-width: 1200px) {
+            .wheel-container {
+                margin-bottom: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                padding: 15px;
+            }
+            .controls input, .controls select, .controls button {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+    console.log("Inicio del script Babel...");
+
+const DIMENSIONS = {
+    centerX: 375,
+    centerY: 375,
+    radius: 320,
+    innerRadius: 140,
+    glyphRadius: 290
+};
+
+const SIGNS = [
+    {name: 'ARIES', start: 354, length: 36, symbol: '♈', color: '#FFE5E5'},
+    {name: 'TAURUS', start: 30, length: 30, symbol: '♉', color: '#E5FFE5'},
+    {name: 'GEMINI', start: 60, length: 30, symbol: '♊', color: '#FFFFE5'},
+    {name: 'CANCER', start: 90, length: 30, symbol: '♋', color: '#E5FFFF'},
+    {name: 'LEO', start: 120, length: 30, symbol: '♌', color: '#FFE5E5'},
+    {name: 'VIRGO', start: 150, length: 36, symbol: '♍', color: '#E5FFE5'},
+    {name: 'LIBRA', start: 186, length: 24, symbol: '♎', color: '#FFFFE5'},
+    {name: 'SCORPIO', start: 210, length: 30, symbol: '♏', color: '#E5FFFF'},
+    {name: 'OPHIUCHUS', start: 240, length: 12, symbol: '⛎', color: '#FFFFE5'},
+    {name: 'SAGITTARIUS', start: 252, length: 18, symbol: '♐', color: '#FFE5E5'},
+    {name: 'CAPRICORN', start: 270, length: 36, symbol: '♑', color: '#E5FFE5'},
+    {name: 'AQUARIUS', start: 306, length: 18, symbol: '♒', color: '#FFFFE5'},
+    {name: 'PEGASUS', start: 324, length: 6, symbol: '∩', color: '#E5FFFF'},
+    {name: 'PISCES', start: 330, length: 24, symbol: '♓', color: '#E5FFFF'}
+];
+
+const PLANET_SYMBOLS = {
+    'SOL': '☉',
+    'LUNA': '☽',
+    'MERCURIO': '☿',
+    'VENUS': '♀',
+    'MARTE': '♂',
+    'JÚPITER': '♃',
+    'SATURNO': '♄',
+    'ASC': 'ASC',
+    'MC': 'MC',
+    'DSC': 'DSC',
+    'IC': 'IC'
+};
+
+const ASPECTS = {
+    CONJUNCTION: { angle: 0, orb: 2, color: '#000080', name: 'Armónico Relevante' },
+    SEIS: { angle: 6, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    DOCE: { angle: 12, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    DIECIOCHO: { angle: 18, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    VEINTICUATRO: { angle: 24, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    TREINTA: { angle: 30, orb: 2, color: '#FF0000', name: 'Inarmónico Relevante' },
+    TREINTAYSEIS: { angle: 36, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CUARENTAYDOS: { angle: 42, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    CUARENTAYOCHO: { angle: 48, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CICUENTAYCUATRO: { angle: 54, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    SEXTILE: { angle: 60, orb: 2, color: '#000080', name: 'Armónico Relevante' },
+    SESENTAYSEIS: { angle: 66, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    QUINTILE: { angle: 72, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    SETENTAYOCHO: { angle: 78, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    OCHENTAYCUATRO: { angle: 84, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    SQUARE: { angle: 90, orb: 2, color: '#FF0000', name: 'Inarmónico Relevante' },
+    NOVENTAYSEIS: { angle: 96, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CIENTODOS: { angle: 102, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    CIENTOOCHO: { angle: 108, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CIENTOCATORCE: { angle: 114, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    TRINE: { angle: 120, orb: 2, color: '#000080', name: 'Armónico Relevante' },
+    CIENTOVEINTISEIS: { angle: 126, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    CIENTOTREINTAYDOS: { angle: 132, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CIENTOTREINTAYOCHO: { angle: 138, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    CIENTOCUARENTAYCUATRO: { angle: 144, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    QUINCUNX: { angle: 150, orb: 2, color: '#FF0000', name: 'Inarmónico Relevante' },
+    CIENTOCINCUENTAYSEIS: { angle: 156, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CIENTOSESENTAYDOS: { angle: 162, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    CIENTOSESENTAYOCHO: { angle: 168, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CIENTOSETENTAYCUATRO: { angle: 174, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    OPPOSITION: { angle: 180, orb: 2, color: '#000080', name: 'Armónico Relevante' }
+};
+
+const COLORS = {
+    RED: '#FF0000',
+    GREEN: '#00FF00',
+    BLUE: '#0000FF',
+    YELLOW: '#FFFF00'
+};
+
+// Nueva constante para relación entre planetas y su dignidad
+const PLANET_DIGNITIES = {
+    'SOL': {
+        'ESCORPIO': 'Domicilio',
+        'GÉMINIS': 'Domicilio',
+        'PEGASO': 'Domicilio',
+        'LEO': 'Exaltación',
+        'ARIES': 'Exaltación',
+        'CAPRICORNIO': 'Exaltación',
+        'VIRGO': 'Exaltación',
+        'CÁNCER': 'Caída',
+        'PISCIS': 'Caída',
+        'LIBRA': 'Caída',
+        'ACUARIO': 'Caída',
+        'OFIUCO': 'Caída',
+        'TAURO': 'Exilio',
+        'SAGITARIO': 'Exilio'
+    },
+    'LUNA': {
+        'TAURO': 'Domicilio',
+        'SAGITARIO': 'Domicilio',
+        'CÁNCER': 'Exaltación',
+        'PISCIS': 'Exaltación',
+        'LIBRA': 'Exaltación',
+        'ACUARIO': 'Exaltación',
+        'OFIUCO': 'Exaltación',
+        'LEO': 'Caída',
+        'ARIES': 'Caída',
+        'CAPRICORNIO': 'Caída',
+        'VIRGO': 'Caída',
+        'ESCORPIO': 'Exilio',
+        'GÉMINIS': 'Exilio',
+        'PEGASO': 'Exilio'
+    },
+    'MERCURIO': {
+        'LEO': 'Domicilio',
+        'ARIES': 'Domicilio',
+        'ESCORPIO': 'Domicilio',
+        'PEGASO': 'Domicilio',
+        'GÉMINIS': 'Exaltación',
+        'CAPRICORNIO': 'Exaltación',
+        'VIRGO': 'Exaltación',
+        'TAURO': 'Caída',
+        'LIBRA': 'Caída',
+        'ACUARIO': 'Caída',
+        'OFIUCO': 'Caída',
+        'CÁNCER': 'Exilio',
+        'PISCIS': 'Exilio',
+        'SAGITARIO': 'Exilio'
+    },
+    'VENUS': {
+        'CÁNCER': 'Domicilio',
+        'PISCIS': 'Domicilio',
+        'SAGITARIO': 'Domicilio',
+        'TAURO': 'Exaltación',
+        'LIBRA': 'Exaltación',
+        'ACUARIO': 'Exaltación',
+        'OFIUCO': 'Exaltación',
+        'GÉMINIS': 'Caída',
+        'CAPRICORNIO': 'Caída',
+        'VIRGO': 'Caída',
+        'LEO': 'Exilio',
+        'ARIES': 'Exilio',
+        'ESCORPIO': 'Exilio',
+        'PEGASO': 'Exilio'
+    },
+    'MARTE': {
+        'GÉMINIS': 'Domicilio',
+        'CAPRICORNIO': 'Domicilio',
+        'VIRGO': 'Domicilio',
+        'LEO': 'Exaltación',
+        'ARIES': 'Exaltación',
+        'ESCORPIO': 'Exaltación',
+        'PEGASO': 'Exaltación',
+        'CÁNCER': 'Caída',
+        'PISCIS': 'Caída',
+        'SAGITARIO': 'Caída',
+        'TAURO': 'Exilio',
+        'LIBRA': 'Exilio',
+        'ACUARIO': 'Exilio',
+        'OFIUCO': 'Exilio'
+    },
+    'JÚPITER': {
+        'TAURO': 'Domicilio',
+        'LIBRA': 'Domicilio',
+        'ACUARIO': 'Domicilio',
+        'OFIUCO': 'Domicilio',
+        'CÁNCER': 'Exaltación',
+        'PISCIS': 'Exaltación',
+        'SAGITARIO': 'Exaltación',
+        'LEO': 'Caída',
+        'ARIES': 'Caída',
+        'ESCORPIO': 'Caída',
+        'PEGASO': 'Caída',
+        'GÉMINIS': 'Exilio',
+        'CAPRICORNIO': 'Exilio',
+        'VIRGO': 'Exilio'
+    },
+    'SATURNO': {
+        'LEO': 'Domicilio',
+        'ARIES': 'Domicilio',
+        'LIBRA': 'Domicilio',
+        'ACUARIO': 'Domicilio',
+        'OFIUCO': 'Exaltación',
+        'GÉMINIS': 'Exaltación',
+        'TAURO': 'Caída',
+        'ESCORPIO': 'Caída',
+        'PEGASO': 'Caída',
+        'CÁNCER': 'Exilio',
+        'PISCIS': 'Exilio',
+        'CAPRICORNIO': 'Exilio',
+        'VIRGO': 'Exilio'
+    }
+};
+
+// Función para convertir longitudes absolutas a grados dentro de un signo
+const convertirGradosZodiacales = (longitud, signo) => {
+    // Definición de los límites de cada signo
+    const limites = {
+        "ARIES": { inicio: 354, fin: 30, cruza0: true },
+        "TAURO": { inicio: 30, fin: 60, cruza0: false },
+        "GÉMINIS": { inicio: 60, fin: 90, cruza0: false },
+        "CÁNCER": { inicio: 90, fin: 120, cruza0: false },
+        "LEO": { inicio: 120, fin: 150, cruza0: false },
+        "VIRGO": { inicio: 150, fin: 186, cruza0: false },
+        "LIBRA": { inicio: 186, fin: 210, cruza0: false },
+        "ESCORPIO": { inicio: 210, fin: 240, cruza0: false },
+        "OFIUCO": { inicio: 240, fin: 252, cruza0: false },
+        "SAGITARIO": { inicio: 252, fin: 270, cruza0: false },
+        "CAPRICORNIO": { inicio: 270, fin: 306, cruza0: false },
+        "ACUARIO": { inicio: 306, fin: 324, cruza0: false },
+        "PEGASO": { inicio: 324, fin: 330, cruza0: false },
+        "PISCIS": { inicio: 330, fin: 354, cruza0: false }
+    };
+    
+    // Verificar si el signo existe en nuestro diccionario
+    if (!limites[signo]) {
+        return "0° 00'";
+    }
+    
+    const limite = limites[signo];
+    longitud = parseFloat(longitud) % 360;
+    
+    // Calcular los grados dentro del signo
+    let gradosEnSigno;
+    
+    if (limite.cruza0 && longitud < limite.inicio && longitud < limite.fin) {
+        // Caso especial: Aries cuando la longitud está entre 0° y 30°
+        gradosEnSigno = longitud + (360 - limite.inicio);
+    } else if (limite.cruza0 && longitud >= limite.inicio) {
+        // Caso especial: Aries cuando la longitud está entre 354° y 360°
+        gradosEnSigno = longitud - limite.inicio;
+    } else {
+        // Caso normal para otros signos
+        gradosEnSigno = longitud - limite.inicio;
+    }
+    
+    // Asegurarse de que los grados están dentro del rango correcto
+    if (gradosEnSigno < 0) gradosEnSigno += 360;
+    
+    // Convertir a grados y minutos
+    const grados = Math.floor(gradosEnSigno);
+    const minutos = Math.floor((gradosEnSigno - grados) * 60);
+    
+    // Devolver en formato "X° YY'"
+    return `${grados}° ${minutos.toString().padStart(2, '0')}'`;
+};
+
+function calculate_aspects(planets) {
+    const aspects = [];
+    // Solo usar planetas tradicionales
+    const traditionalPlanets = planets.filter(p => 
+        ['SOL', 'LUNA', 'MERCURIO', 'VENUS', 'MARTE', 'JÚPITER', 'SATURNO', 'ASC', 'MC'].includes(p.name)
+    );
+
+    for (let i = 0; i < traditionalPlanets.length; i++) {
+        for (let j = i + 1; j < traditionalPlanets.length; j++) {
+            const planet1 = traditionalPlanets[i];
+            const planet2 = traditionalPlanets[j];
+            let diff = Math.abs(planet1.longitude - planet2.longitude);
+            if (diff > 180) diff = 360 - diff;
+            
+            for (const [aspectType, aspect] of Object.entries(ASPECTS)) {
+                if (Math.abs(diff - aspect.angle) <= aspect.orb) {
+                    aspects.push({
+                        planet1: planet1.name,
+                        planet2: planet2.name,
+                        type: aspectType,
+                        angle: diff,
+                        color: aspect.color,
+                        name: aspect.name
+                    });
+                    break;
+                }
+            }
+        }
+    }
+    return aspects;
+}
+
+function getPlanetColor(planet, longitude) {
+    if (planet === 'ASC' || planet === 'MC' || planet === 'DSC' || planet === 'IC') return '#000000';
+    
+    if (planet === 'JÚPITER') {
+        if ((longitude >= 306.00 && longitude <= 360.00) || (longitude >= 0.00 && longitude <= 150.00)) 
+            return COLORS.BLUE;
+        if (longitude > 150.00 && longitude < 306.00) 
+            return COLORS.RED;
+    }
+
+    if (planet === 'SATURNO') {
+        if ((longitude >= 330.00 && longitude <= 360.00) || (longitude >= 0.00 && longitude <= 150.00))
+            return COLORS.YELLOW;
+        if (longitude > 240.00 && longitude <= 252.00) return COLORS.YELLOW;
+        if (longitude > 252.00 && longitude <= 330.00) return COLORS.RED;
+        if (longitude > 150.00 && longitude <= 240.00) return COLORS.RED;
+        return COLORS.YELLOW;
+    }
+
+    if (longitude > 150.00 && longitude <= 330.00) {
+        switch(planet) {
+            case 'SOL': case 'MERCURIO': return COLORS.GREEN;
+            case 'VENUS': case 'LUNA': return COLORS.YELLOW;
+            case 'MARTE': return COLORS.BLUE;
+            default: return '#000000';
+        }
+    } else {
+        switch(planet) {
+            case 'SOL': case 'MARTE': return COLORS.RED;
+            case 'VENUS': return COLORS.GREEN;
+            case 'MERCURIO': case 'SATURNO': return COLORS.YELLOW;
+            case 'LUNA': return COLORS.BLUE;
+            default: return '#000000';
+        }
+    }
+}
+
+function adjustPlanetLabel(planet, allPlanets) {
+    const baseRadius = DIMENSIONS.innerRadius + 35;
+    const angleDiff = 7;
+    
+    const nearbyPlanets = allPlanets.filter(p => {
+        if (p.name === planet.name) return false;
+        let diff = Math.abs(p.longitude - planet.longitude);
+        if (diff > 180) diff = 360 - diff;
+        return diff < angleDiff;
+    });
+
+    if (nearbyPlanets.length === 0) {
+        return {
+            radius: baseRadius,
+            angleOffset: 0
+        };
+    }
+
+    const isLower = planet.name < nearbyPlanets[0].name;
+    const radiusOffset = isLower ? 0 : 25;
+    const angleOffset = isLower ? -1 : 1;
+
+    return {
+        radius: baseRadius + radiusOffset,
+        angleOffset: angleOffset * 3
+    };
+}
+
+function createArcPath(startAngle, endAngle) {
+    const start = ((startAngle - 90) * Math.PI) / 180;
+    const end = ((endAngle - 90) * Math.PI) / 180;
+    
+    const x1 = DIMENSIONS.centerX + DIMENSIONS.radius * Math.cos(start);
+    const y1 = DIMENSIONS.centerY + DIMENSIONS.radius * Math.sin(start);
+    const x2 = DIMENSIONS.centerX + DIMENSIONS.radius * Math.cos(end);
+    const y2 = DIMENSIONS.centerY + DIMENSIONS.radius * Math.sin(end);
+    
+    const x1Inner = DIMENSIONS.centerX + DIMENSIONS.innerRadius * Math.cos(start);
+    const y1Inner = DIMENSIONS.centerY + DIMENSIONS.innerRadius * Math.sin(start);
+    const x2Inner = DIMENSIONS.centerX + DIMENSIONS.innerRadius * Math.cos(end);
+    const y2Inner = DIMENSIONS.centerY + DIMENSIONS.innerRadius * Math.sin(end);
+    
+    const largeArcFlag = end - start <= Math.PI ? "0" : "1";
+    
+    return `M ${x1} ${y1} A ${DIMENSIONS.radius} ${DIMENSIONS.radius} 0 ${largeArcFlag} 1 ${x2} ${y2} L ${x2Inner} ${y2Inner} A ${DIMENSIONS.innerRadius} ${DIMENSIONS.innerRadius} 0 ${largeArcFlag} 0 ${x1Inner} ${y1Inner} Z`;
+}
+
+// Función para obtener la dignidad de un planeta en un signo
+function getPlanetDignity(planet, sign) {
+    if (PLANET_DIGNITIES[planet] && PLANET_DIGNITIES[planet][sign]) {
+        return PLANET_DIGNITIES[planet][sign];
+    }
+    return '';
+}
+
+function App() {
+    console.log("Componente App inicializado");
+    // Estados
+    const [cities, setCities] = React.useState([]);
+    const [cityInput, setCityInput] = React.useState('');
+    const [date, setDate] = React.useState(new Date().toISOString().split('T')[0]);
+    const [time, setTime] = React.useState(new Date().toTimeString().slice(0,5));
+    const [planets, setPlanets] = React.useState([]);
+    const [aspects, setAspects] = React.useState([]);
+    const [error, setError] = React.useState('');
+    const [selectedAspect, setSelectedAspect] = React.useState(null);
+    const [selectedPlanet, setSelectedPlanet] = React.useState(null);
+    const [dignityTable, setDignityTable] = React.useState(null);
+    const [birthType, setBirthType] = React.useState(null);
+    const [triplicityTable, setTriplicityTable] = React.useState(null);
+
+    // Manejadores de eventos
+    const             handleCalculate = () => {
+        console.log("Calculando para ciudad:", cityInput);
+        
+        if (!cityInput || !date || !time) {
+            setError("Debes ingresar ciudad, fecha y hora.");
+            return;
+        }
+
+        console.log("Datos para cálculo:", { city: cityInput, date, time });
+        const apiUrl = `/calculate`;
+
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                city: cityInput,
+                date: date,
+                time: time
+            })
+        })
+        .then(response => {
+            console.log("Respuesta status:", response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log("Datos recibidos:", data);
+            if (data.error) throw new Error(data.error);
+
+            document.getElementById("location").innerHTML = `<b>Ciudad:</b> ${data.city}`;
+            document.getElementById("coordinates").innerHTML = `<b>Coordenadas:</b> Lat ${data.coordinates.latitude}, Lon ${data.coordinates.longitude}`;
+            
+            // Mostrar información de zona horaria
+            if (data.timezone) {
+                const dstInfo = data.timezone.is_dst ? "Horario de verano activo" : "Horario estándar";
+                const abbr = data.timezone.is_dst ? data.timezone.abbreviation_DST : data.timezone.abbreviation_STD;
+                const hemisferio = data.timezone.hemisphere === "norte" ? "Hemisferio Norte" : "Hemisferio Sur";
+                document.getElementById("timezone").innerHTML = `<b>Zona horaria:</b> ${data.timezone.name} (${abbr}) - ${dstInfo} - ${hemisferio}`;
+                document.getElementById("time-conversion").innerHTML = `<b>Hora local:</b> ${data.local_time} → <b>UTC:</b> ${data.utc_time}`;
+            } else if (data.error_timezone) {
+                document.getElementById("timezone").innerHTML = `<b>Advertencia:</b> ${data.error_timezone}`;
+            }
+
+            // Filtrar solo los planetas tradicionales y el ascendente/mediocielo
+            const traditionalPlanets = data.positions.filter(p => 
+                ['SOL', 'LUNA', 'MERCURIO', 'VENUS', 'MARTE', 'JÚPITER', 'SATURNO', 'ASC', 'MC'].includes(p.name)
+            );
+            
+            // Actualizar el estado con los planetas filtrados
+            setPlanets(traditionalPlanets);
+            setAspects(calculate_aspects(traditionalPlanets));
+            
+            // Actualizar tablas de dignidades y triplicidades
+            const dignityTableFiltered = {
+                tabla: data.dignity_table.tabla.filter(row => 
+                    ['SOL', 'LUNA', 'MERCURIO', 'VENUS', 'MARTE', 'JÚPITER', 'SATURNO'].includes(row.planeta)
+                ),
+                total_general: data.dignity_table.total_general
+            };
+            
+            setDignityTable(dignityTableFiltered);
+            setTriplicityTable(data.houses_analysis.houses);
+            setBirthType(data.houses_analysis.birth_type);
+            setError("");
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            setError(`Error en la consulta: ${err.message}`);
+        });
+    };
+
+    const handlePlanetClick = (planetName) => {
+        setSelectedPlanet(selectedPlanet === planetName ? null : planetName);
+        setSelectedAspect(null);
+    };
+
+    const handleAspectClick = (aspect) => {
+        setSelectedAspect(selectedAspect === aspect ? null : aspect);
+        setSelectedPlanet(null);
+    };
+
+    const handleCitySearch = (e) => {
+        const searchText = e.target.value;
+        setCityInput(searchText);
+        
+        if (searchText.length >= 3) {
+            console.log("Buscando ciudades:", searchText);
+            fetch(`/cities?ciudad=${encodeURIComponent(searchText)}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Respuesta de ciudades:", data);
+                    if (data.ciudades && Array.isArray(data.ciudades)) {
+                        setCities(data.ciudades.map(ciudad => ({ value: ciudad, label: ciudad })));
+                    } else {
+                        console.log("Formato de respuesta inesperado:", data);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error buscando ciudades:", err);
+                    setError("Error al buscar ciudades, intenta de nuevo");
+                });
+        }
+    };
+
+    // Filtrar aspectos relevantes (para mostrar en la lista)
+    const filteredAspects = aspects.filter(aspect => 
+        aspect.name === 'Armónico Relevante' || aspect.name === 'Inarmónico Relevante'
+    );
+
+    // Renderizado
+    return (
+        <div>
+            <div className="controls">
+                <label htmlFor="ciudad">Ciudad:</label>
+                <input 
+                    type="text" 
+                    id="ciudad" 
+                    placeholder="Escribe una ciudad..."
+                    value={cityInput}
+                    onChange={handleCitySearch}
+                    list="ciudades-list"
+                />
+                
+                <datalist id="ciudades-list">
+                    {cities.map((city, index) => (
+                        <option key={index} value={city.value}>{city.label}</option>
+                    ))}
+                </datalist>
+
+                <label htmlFor="fecha">Fecha:</label>
+                <input 
+                    type="date" 
+                    id="fecha"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                />
+
+                <label htmlFor="hora">Hora:</label>
+                <input 
+                    type="time" 
+                    id="hora" 
+                    step="60"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                />
+
+                <button onClick={handleCalculate}>
+                    Calcular Carta Astral
+                </button>
+            </div>
+
+            <div id="results">
+                <h3>Resultados:</h3>
+                <div id="location"></div>
+                <div id="coordinates"></div>
+                <div id="timezone"></div>
+                <div id="time-conversion"></div>
+            </div>
+
+            {error && <div style={{color: 'red'}}>{error}</div>}
+
+            {planets.length > 0 && (
+                <>
+                    <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '20px' }}>
+                        {/* Columna izquierda con la carta */}
+                        <div className="wheel-container" style={{ flex: '1 1 700px', minWidth: '700px', maxWidth: '900px' }}>
+                            <svg viewBox="0 0 750 750">
+                                {/* Círculo exterior */}
+                                <circle
+                                    cx={DIMENSIONS.centerX}
+                                    cy={DIMENSIONS.centerY}
+                                    r={DIMENSIONS.radius}
+                                    fill="none"
+                                    stroke="#333"
+                                    strokeWidth="2"
+                                />
+
+                                {/* Signos zodiacales */}
+                                {SIGNS.map(sign => {
+                                    const midAngle = ((sign.start + sign.length/2 - 90) * Math.PI) / 180;
+                                    const glyphX = DIMENSIONS.centerX + DIMENSIONS.glyphRadius * Math.cos(midAngle);
+                                    const glyphY = DIMENSIONS.centerY + DIMENSIONS.glyphRadius * Math.sin(midAngle);
+                                    
+                                    return (
+                                        <g key={sign.name}>
+                                            <path
+                                                d={createArcPath(sign.start, sign.start + sign.length)}
+                                                fill={sign.color}
+                                                stroke="#333"
+                                                strokeWidth="1"
+                                            />
+                                            <text
+                                                x={glyphX}
+                                                y={glyphY}
+                                                textAnchor="middle"
+                                                alignmentBaseline="middle"
+                                                fontSize="20"
+                                            >
+                                                {sign.symbol}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
+
+                                {/* Círculo interior */}
+                                <circle
+                                    cx={DIMENSIONS.centerX}
+                                    cy={DIMENSIONS.centerY}
+                                    r={DIMENSIONS.innerRadius}
+                                    fill="white"
+                                    stroke="#333"
+                                    strokeWidth="1"
+                                />
+
+                                {/* Aspectos - Solo para planetas tradicionales */}
+                                {aspects.map((aspect, index) => {
+                                    const planet1 = planets.find(p => p.name === aspect.planet1);
+                                    const planet2 = planets.find(p => p.name === aspect.planet2);
+                                    
+                                    const angle1 = (planet1.longitude - 90) * Math.PI / 180;
+                                    const angle2 = (planet2.longitude - 90) * Math.PI / 180;
+                                    
+                                    const x1 = DIMENSIONS.centerX + DIMENSIONS.innerRadius * Math.cos(angle1);
+                                    const y1 = DIMENSIONS.centerY + DIMENSIONS.innerRadius * Math.sin(angle1);
+                                    const x2 = DIMENSIONS.centerX + DIMENSIONS.innerRadius * Math.cos(angle2);
+                                    const y2 = DIMENSIONS.centerY + DIMENSIONS.innerRadius * Math.sin(angle2);
+                                    
+                                    return (
+                                        <line
+                                            key={`aspect-${index}`}
+                                            x1={x1}
+                                            y1={y1}
+                                            x2={x2}
+                                            y2={y2}
+                                            stroke={aspect.color}
+                                            strokeWidth={selectedAspect === aspect || 
+                                                (selectedPlanet && (aspect.planet1 === selectedPlanet || aspect.planet2 === selectedPlanet)) ? "3" : "1"}
+                                            strokeDasharray={aspect.type === 'OPPOSITION' ? "5,5" : "none"}
+                                            className="aspect-line"
+                                            onClick={() => handleAspectClick(aspect)}
+                                        />
+                                    );
+                                })}
+
+                                {/* Planetas */}
+                                {planets.map((planet) => {
+                                    const adjustment = adjustPlanetLabel(planet, planets);
+                                    const adjustedAngle = ((planet.longitude + adjustment.angleOffset - 90) * Math.PI) / 180;
+                                    const x = DIMENSIONS.centerX + DIMENSIONS.innerRadius * Math.cos(adjustedAngle);
+                                    const y = DIMENSIONS.centerY + DIMENSIONS.innerRadius * Math.sin(adjustedAngle);
+                                    
+                                    const labelX = DIMENSIONS.centerX + adjustment.radius * Math.cos(adjustedAngle);
+                                    const labelY = DIMENSIONS.centerY + adjustment.radius * Math.sin(adjustedAngle);
+                                    
+                                    const isSelected = selectedPlanet === planet.name;
+                                    const tooltipText = `${planet.name} ${convertirGradosZodiacales(planet.longitude, planet.sign)} ${planet.sign}`;
+
+                                    return (
+                                        <g 
+                                            key={planet.name}
+                                            onClick={() => handlePlanetClick(planet.name)}
+                                            style={{cursor: 'pointer'}}
+                                        >
+                                            <circle
+                                                cx={x}
+                                                cy={y}
+                                                r={isSelected ? "6" : "4"}
+                                                fill={getPlanetColor(planet.name, planet.longitude)}
+                                                stroke="#000"
+                                                strokeWidth={isSelected ? "2" : "1"}
+                                            />
+                                            <text
+                                                x={labelX}
+                                                y={labelY}
+                                                textAnchor="middle"
+                                                alignmentBaseline="middle"
+                                                className="planet-label"
+                                                style={{
+                                                    fontSize: isSelected ? "24px" : "20px"
+                                                }}
+                                            >
+                                                {PLANET_SYMBOLS[planet.name]}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
+                            </svg>
+                        </div>
+
+                        {/* Columna derecha con información de planetas y aspectos */}
+                        <div style={{ flex: '1 1 300px', minWidth: '300px', maxWidth: '400px' }}>
+                            {/* Aspectos y planetas en columnas */}
+                            <div className="planet-container" style={{ marginTop: 0, height: '100%' }}>
+                                <div className="aspects-list">
+                                    <h3>Aspectos Relevantes:</h3>
+                                    {filteredAspects.map((aspect, index) => (
+                                        <div 
+                                            key={`aspect-desc-${index}`} 
+                                            className="aspect-list-item"
+                                            style={{
+                                                backgroundColor: selectedAspect === aspect || 
+                                                    (selectedPlanet && (aspect.planet1 === selectedPlanet || aspect.planet2 === selectedPlanet)) 
+                                                    ? '#f0f0f0' 
+                                                    : 'transparent'
+                                            }}
+                                            onClick={() => handleAspectClick(aspect)}
+                                        >
+                                            {PLANET_SYMBOLS[aspect.planet1]} {aspect.name} {PLANET_SYMBOLS[aspect.planet2]} ({aspect.angle.toFixed(2)}°)
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="planets-list">
+                                    <h3>Planetas:</h3>
+                                    {planets.filter(planet => 
+                                        ['SOL', 'LUNA', 'MERCURIO', 'VENUS', 'MARTE', 'JÚPITER', 'SATURNO', 'ASC', 'MC'].includes(planet.name)
+                                    ).map(planet => {
+                                        // Obtener la dignidad del planeta en el signo actual
+                                        const dignity = getPlanetDignity(planet.name, planet.sign);
+                                        
+                                        return (
+                                            <div 
+                                                key={planet.name}
+                                                className="planet-list-item"
+                                                style={{
+                                                    backgroundColor: selectedPlanet === planet.name ? '#f0f0f0' : 'transparent'
+                                                }}
+                                                onClick={() => handlePlanetClick(planet.name)}
+                                            >
+                                                {PLANET_SYMBOLS[planet.name]} {convertirGradosZodiacales(planet.longitude, planet.sign)} {planet.sign}
+                                                {dignity && ` (${dignity})`}
+                                                {planet.house !== undefined && ` - Casa ${planet.house}`}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="planet-container">
+                        {/* Reordenamos: primero dignidades, luego triplicidades y al final aspectos y planetas */}
+                        {dignityTable && (
+                            <div className="dignity-container">
+                                <h3>Tabla de Dignidades</h3>
+                                <table className="dignity-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Planeta</th>
+                                            <th>Signo</th>
+                                            <th>Casa</th>
+                                            <th>Dignidad Casa</th>
+                                            <th>Dignidad Signo</th>
+                                            <th>Angular</th>
+                                            <th>Aspectos</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {dignityTable.tabla.map((row, index) => (
+                                            <tr key={index}>
+                                                <td>{PLANET_SYMBOLS[row.planeta]} {row.planeta}</td>
+                                                <td>{row.signo} ({convertirGradosZodiacales(
+                                                    planets.find(p => p.name === row.planeta)?.longitude || 0, 
+                                                    row.signo
+                                            )})</td>
+                                                <td>{row.casa}</td>
+                                                <td>{row.puntos_casa}</td>
+                                                <td>{row.puntos_dignidad}</td>
+                                                <td>{row.puntos_angular}</td>
+                                                <td>{row.puntos_aspectos}</td>
+                                                <td>{row.total_planeta}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colSpan="7">Total General</td>
+                                            <td>{dignityTable.total_general}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        )}
+
+                        {triplicityTable && (
+                            <div className="triplicity-container">
+                                <h3>Triplicidades</h3>
+                                <div style={{marginBottom: '10px'}}>
+                                    Lado: <strong>{birthType?.toUpperCase()}</strong>
+                                </div>
+                                <table className="triplicity-table">
+                                    <thead>
+                                        <tr>
+                                            <th>CASA</th>
+                                            <th>ELEMENTO</th>
+                                            <th>RIGE</th>
+                                            <th>0_a_28</th>
+                                            <th>28_a_56</th>
+                                            <th>56_a_84</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {triplicityTable.map((house, index) => {
+                                            const dignityValues = dignityTable.tabla.reduce((acc, row) => {
+                                                acc[row.planeta] = row.total_planeta;
+                                                return acc;
+                                            }, {});
+
+                                            const rulers = house.triplicity_rulers;
+                                            let displayRulers;
+                    
+                                            if (birthType === 'seco') {
+                                                displayRulers = {
+                                                    first: rulers.regente2,  // Seco
+                                                    second: rulers.regente1,  // Húmedo
+                                                    third: rulers.regente3   // Participativo
+                                                };
+                                            } else {
+                                                displayRulers = {
+                                                    first: rulers.regente1,  // Húmedo
+                                                    second: rulers.regente2,  // Seco
+                                                    third: rulers.regente3   // Participativo
+                                                };
+                                            }
+
+                                            return (
+                                                <tr key={index}>
+                                                    <td>{index + 1}</td>
+                                                    <td>{house.element}</td>
+                                                    <td>{house.meaning}</td>
+                                                    <td>
+                                                        {PLANET_SYMBOLS[displayRulers.first]}
+                                                        {dignityValues[displayRulers.first] !== undefined && 
+                                                            ` (${dignityValues[displayRulers.first]})`}
+                                                    </td>
+                                                    <td>
+                                                        {PLANET_SYMBOLS[displayRulers.second]}
+                                                        {dignityValues[displayRulers.second] !== undefined && 
+                                                            ` (${dignityValues[displayRulers.second]})`}
+                                                    </td>
+                                                    <td>
+                                                        {PLANET_SYMBOLS[displayRulers.third]}
+                                                        {dignityValues[displayRulers.third] !== undefined && 
+                                                            ` (${dignityValues[displayRulers.third]})`}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* Mostramos aspectos y planetas en dos columnas paralelas */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            {/* Columna de aspectos */}
+                            <div className="aspects-list" style={{ width: '48%' }}>
+                                <h3>Aspectos Relevantes:</h3>
+                                {filteredAspects.map((aspect, index) => (
+                                    <div 
+                                        key={`aspect-desc-${index}`} 
+                                        className="aspect-list-item"
+                                        style={{
+                                            backgroundColor: selectedAspect === aspect || 
+                                                (selectedPlanet && (aspect.planet1 === selectedPlanet || aspect.planet2 === selectedPlanet)) 
+                                                ? '#f0f0f0' 
+                                                : 'transparent'
+                                        }}
+                                        onClick={() => handleAspectClick(aspect)}
+                                    >
+                                        {PLANET_SYMBOLS[aspect.planet1]} {aspect.name} {PLANET_SYMBOLS[aspect.planet2]} ({aspect.angle.toFixed(2)}°)
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Columna de planetas */}
+                            <div className="planets-list" style={{ width: '48%' }}>
+                                <h3>Planetas:</h3>
+                                {planets.filter(planet => 
+                                    ['SOL', 'LUNA', 'MERCURIO', 'VENUS', 'MARTE', 'JÚPITER', 'SATURNO', 'ASC', 'MC'].includes(planet.name)
+                                ).map(planet => {
+                                    // Obtener la dignidad del planeta en el signo actual
+                                    const dignity = getPlanetDignity(planet.name, planet.sign);
+                                    
+                                    return (
+                                        <div 
+                                            key={planet.name}
+                                            className="planet-list-item"
+                                            style={{
+                                                backgroundColor: selectedPlanet === planet.name ? '#f0f0f0' : 'transparent'
+                                            }}
+                                            onClick={() => handlePlanetClick(planet.name)}
+                                        >
+                                            {PLANET_SYMBOLS[planet.name]} {convertirGradosZodiacales(planet.longitude, planet.sign)} {planet.sign}
+                                            {dignity && ` (${dignity})`}
+                                            {planet.house !== undefined && ` - Casa ${planet.house}`}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
+
+console.log("Script iniciando...");
+
+// Verificar que React está cargado
+console.log("React:", typeof React);
+console.log("ReactDOM:", typeof ReactDOM);
+
+// Verificar que el elemento root existe
+const rootElement = document.getElementById("root");
+console.log("Elemento root:", rootElement);
+
+// Siempre crear un nuevo root y renderizar
+console.log("Creando nuevo root de React...");
+try {
+    const root = ReactDOM.createRoot(rootElement);
+    console.log("Renderizando App...");
+    root.render(<App />);
+    console.log("App renderizada");
+} catch (error) {
+    console.error("Error al renderizar App:", error);
+}
+    </script>
+</body>
+</html> 
