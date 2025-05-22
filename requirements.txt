@@ -18,3 +18,4 @@ fastapi
 uvicorn
 tzdata
 pandas
+pyswisseph
